@@ -1,0 +1,29 @@
+{
+  "activities": [
+    {
+      "activityId": 1001,
+      "activityName": "Bieg progowy",
+      "startTimeLocal": "2026-09-18T18:00:00Z",
+      "activityType": { "typeKey": "running" },
+      "summary": { "mainSessionEndSec": 900 },
+      "heartRateSamples": [
+        { "timeSec": 870, "heartRate": 176 },
+        { "timeSec": 900, "heartRate": 172 },
+        { "timeSec": 930, "heartRate": 160 },
+        { "timeSec": 960, "heartRate": 146 }
+      ]
+    },
+    {
+      "activityId": 1002,
+      "activityName": "Rower spokojny",
+      "startTimeLocal": "2026-09-17T07:10:00Z",
+      "activityType": { "typeKey": "cycling" },
+      "summary": { "mainSessionEndSec": 1800 },
+      "heartRateSamples": [
+        { "timeSec": 1770, "heartRate": 149 },
+        { "timeSec": 1800, "heartRate": 145 },
+        { "timeSec": 1860, "heartRate": 127 }
+      ]
+    }
+  ]
+}

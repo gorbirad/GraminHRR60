@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GraminHRR60</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 2rem; background: #f7f7f7; color: #222; }
+      main { max-width: 960px; margin: 0 auto; }
+      button { padding: 0.6rem 1rem; cursor: pointer; }
+      table { width: 100%; border-collapse: collapse; background: white; margin-top: 1rem; }
+      th, td { padding: 0.75rem; border-bottom: 1px solid #ddd; text-align: left; }
+      .pill { border-radius: 999px; padding: 0.15rem 0.5rem; background: #eef; display: inline-block; }
+      .meta { color: #555; margin: 0.5rem 0 1rem; }
+      .error { color: #a40000; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>GraminHRR60</h1>
+      <p>Automatyczne odświeżanie treningów Garmin Connect oraz wyliczanie spadku tętna po 60 sekundach od końca głównej sesji.</p>
+      <button id="refresh">Odśwież teraz</button>
+      <p id="meta" class="meta">Ładowanie…</p>
+      <p id="error" class="error"></p>
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Trening</th>
+            <th>Typ</th>
+            <th>HR koniec</th>
+            <th>HR +60s</th>
+            <th>HRR60</th>
+            <th>Ocena</th>
+          </tr>
+        </thead>
+        <tbody id="results"></tbody>
+      </table>
+    </main>
+    <script>
+      const meta = document.getElementById('meta');
+      const error = document.getElementById('error');
+      const tbody = document.getElementById('results');
+      const refreshButton = document.getElementById('refresh');
+
+      function renderRow(result) {
+        return `
+          <tr>
+            <td>${result.startTime ?? '-'}</td>
+            <td>${result.name}</td>
+            <td><span class="pill">${result.activityType}</span></td>
+            <td>${result.endHeartRate ?? '-'}</td>
+            <td>${result.heartRateAt60Sec ?? '-'}</td>
+            <td>${result.hrr60 ?? '-'}</td>
+            <td>${result.classification}</td>
+          </tr>`;
+      }
+
+      async function load(method = 'GET') {
+        error.textContent = '';
+        meta.textContent = 'Ładowanie…';
+        const response = await fetch(method === 'POST' ? '/api/refresh' : '/api/results', { method });
+        const payload = await response.json();
+
+        meta.textContent = payload.refreshedAt
+          ? `Źródło: ${payload.source} · Ostatnie odświeżenie: ${payload.refreshedAt}`
+          : 'Brak danych';
+        error.textContent = payload.error ?? '';
+        tbody.innerHTML = payload.results.map(renderRow).join('') || '<tr><td colspan="7">Brak treningów.</td></tr>';
+      }
+
+      refreshButton.addEventListener('click', () => load('POST').catch((fetchError) => {
+        error.textContent = fetchError.message;
+      }));
+
+      load().catch((fetchError) => {
+        error.textContent = fetchError.message;
+        meta.textContent = 'Nie udało się pobrać wyników.';
+      });
+    </script>
+  </body>
+</html>
