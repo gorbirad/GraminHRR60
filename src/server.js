@@ -17,6 +17,6 @@ server.listen(port, () => {
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, () => {
     app.stopAutoRefresh();
-    server.close(() => process.exit(0));
+    server.close();
   });
 }
