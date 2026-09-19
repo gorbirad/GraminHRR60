@@ -15,8 +15,12 @@ server.listen(port, () => {
 });
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
-  process.on(signal, () => {
+  process.once(signal, () => {
     app.stopAutoRefresh();
-    server.close();
+
+    server.close(async () => {
+      await app.waitForRefresh();
+      process.exit(0);
+    });
   });
 }

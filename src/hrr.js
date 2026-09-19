@@ -33,7 +33,15 @@ export function calculateHrr60({ heartRateSamples = [], mainSessionEndSec } = {}
     return null;
   }
 
-  const endSample = [...samples].reverse().find((sample) => sample.timeSec <= sessionEndSec);
+  let endSample = null;
+
+  for (let index = samples.length - 1; index >= 0; index -= 1) {
+    if (samples[index].timeSec <= sessionEndSec) {
+      endSample = samples[index];
+      break;
+    }
+  }
+
   const recoverySample = samples.find((sample) => sample.timeSec >= sessionEndSec + 60);
 
   if (!endSample || !recoverySample) {

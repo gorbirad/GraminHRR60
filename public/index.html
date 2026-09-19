@@ -92,13 +92,28 @@
 
         try {
           const response = await fetch(method === 'POST' ? '/api/refresh' : '/api/results', { method });
-          const payload = await response.json();
+          const rawPayload = await response.text();
+          let payload;
+
+          try {
+            payload = rawPayload ? JSON.parse(rawPayload) : {};
+          } catch {
+            throw new Error(`Nieprawidłowa odpowiedź serwera (${response.status})`);
+          }
+
+          if (!response.ok) {
+            throw new Error(payload.error ?? `Nie udało się odświeżyć danych (${response.status})`);
+          }
 
           meta.textContent = payload.refreshedAt
             ? `Źródło: ${payload.source} · Ostatnie odświeżenie: ${payload.refreshedAt}`
             : 'Brak danych';
           error.textContent = payload.error ?? '';
           renderResults(payload.results);
+        } catch (fetchError) {
+          meta.textContent = 'Nie udało się pobrać wyników.';
+          error.textContent = fetchError.message;
+          renderResults([]);
         } finally {
           dashboard.setAttribute('aria-busy', 'false');
           refreshButton.disabled = false;

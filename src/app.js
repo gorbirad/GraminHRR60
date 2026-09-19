@@ -122,5 +122,9 @@ export function createApp({
     }
   }
 
-  return { handler, refreshResults, startAutoRefresh, stopAutoRefresh, state };
+  function waitForRefresh() {
+    return refreshPromise ?? Promise.resolve();
+  }
+
+  return { handler, refreshResults, startAutoRefresh, stopAutoRefresh, waitForRefresh, state };
 }
