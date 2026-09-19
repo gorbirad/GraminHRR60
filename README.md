@@ -17,7 +17,7 @@ Domyślnie serwer czyta przykładowe dane z `/data/sample-garmin-connect.json`. 
 
 - `GARMIN_CONNECT_JSON_PATH` — ścieżka do pliku JSON z aktywnościami
 - `GARMIN_CONNECT_JSON_URL` — URL zwracający JSON z aktywnościami Garmin Connect
-- `GARMIN_CONNECT_BEARER_TOKEN` — opcjonalny token ****** zapytania HTTP
+- `GARMIN_CONNECT_BEARER_TOKEN` — opcjonalny sekret do nagłówka Authorization dla zapytania HTTP
 - `GARMIN_CONNECT_COOKIE` — opcjonalny nagłówek Cookie do zapytania HTTP
 - `FETCH_INTERVAL_MS` — interwał automatycznego odświeżania (domyślnie 900000 ms)
 - `PORT` — port HTTP serwera
