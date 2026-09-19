@@ -9,7 +9,7 @@ app.refreshResults().catch(() => {});
 app.startAutoRefresh();
 
 server.listen(port, () => {
-  console.log(`GraminHRR60 dashboard listening on http://localhost:${port}`);
+  console.log(`GarminHRR60 dashboard listening on http://localhost:${port}`);
 });
 
 for (const signal of ['SIGINT', 'SIGTERM']) {

@@ -41,6 +41,9 @@ export function createApp({
         state.refreshedAt = clock();
         state.lastError = null;
       } catch (error) {
+        state.results = [];
+        state.source = null;
+        state.refreshedAt = clock();
         state.lastError = error.message;
       } finally {
         refreshPromise = null;

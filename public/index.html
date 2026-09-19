@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>GraminHRR60</title>
+    <title>GarminHRR60</title>
     <style>
       body { font-family: Arial, sans-serif; margin: 2rem; background: #f7f7f7; color: #222; }
       main { max-width: 960px; margin: 0 auto; }
@@ -17,7 +17,7 @@
   </head>
   <body>
     <main>
-      <h1>GraminHRR60</h1>
+      <h1>GarminHRR60</h1>
       <p>Automatyczne odświeżanie treningów Garmin Connect oraz wyliczanie spadku tętna po 60 sekundach od końca głównej sesji.</p>
       <button id="refresh">Odśwież teraz</button>
       <p id="meta" class="meta">Ładowanie…</p>
@@ -43,17 +43,43 @@
       const tbody = document.getElementById('results');
       const refreshButton = document.getElementById('refresh');
 
-      function renderRow(result) {
-        return `
-          <tr>
-            <td>${result.startTime ?? '-'}</td>
-            <td>${result.name}</td>
-            <td><span class="pill">${result.activityType}</span></td>
-            <td>${result.endHeartRate ?? '-'}</td>
-            <td>${result.heartRateAt60Sec ?? '-'}</td>
-            <td>${result.hrr60 ?? '-'}</td>
-            <td>${result.classification}</td>
-          </tr>`;
+      function appendCell(row, value) {
+        const cell = document.createElement('td');
+        cell.textContent = value ?? '-';
+        row.appendChild(cell);
+      }
+
+      function renderResults(results) {
+        tbody.textContent = '';
+
+        if (!results.length) {
+          const row = document.createElement('tr');
+          const cell = document.createElement('td');
+          cell.colSpan = 7;
+          cell.textContent = 'Brak treningów.';
+          row.appendChild(cell);
+          tbody.appendChild(row);
+          return;
+        }
+
+        for (const result of results) {
+          const row = document.createElement('tr');
+          appendCell(row, result.startTime);
+          appendCell(row, result.name);
+
+          const activityCell = document.createElement('td');
+          const pill = document.createElement('span');
+          pill.className = 'pill';
+          pill.textContent = result.activityType;
+          activityCell.appendChild(pill);
+          row.appendChild(activityCell);
+
+          appendCell(row, result.endHeartRate);
+          appendCell(row, result.heartRateAt60Sec);
+          appendCell(row, result.hrr60);
+          appendCell(row, result.classification);
+          tbody.appendChild(row);
+        }
       }
 
       async function load(method = 'GET') {
@@ -66,7 +92,7 @@
           ? `Źródło: ${payload.source} · Ostatnie odświeżenie: ${payload.refreshedAt}`
           : 'Brak danych';
         error.textContent = payload.error ?? '';
-        tbody.innerHTML = payload.results.map(renderRow).join('') || '<tr><td colspan="7">Brak treningów.</td></tr>';
+        renderResults(payload.results);
       }
 
       refreshButton.addEventListener('click', () => load('POST').catch((fetchError) => {

@@ -1,4 +1,4 @@
-# GraminHRR60
+# GarminHRR60
 
 Minimalna aplikacja pobiera treningi Garmin Connect z pliku JSON albo z adresu URL, wylicza HRR60 (spadek tętna 60 sekund po zakończeniu głównej sesji) i prezentuje wyniki na prostym dashboardzie webowym.
 
