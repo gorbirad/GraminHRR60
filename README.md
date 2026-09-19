@@ -5,7 +5,7 @@ Automatyczne pobieranie treningów z Garmin Connect i wyliczanie **HRR60**
 sesji treningowej.
 
 Pełny plan projektu: [PLAN.md](./PLAN.md).
-Historia decyzji projektowych (rozmowa wstępna): [info1.md](./info1.md).
+
 
 ## Struktura projektu
 

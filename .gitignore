@@ -30,3 +30,6 @@ data/*.gpx
 .vscode/
 .idea/
 *.log
+
+# --- Prywatne notatki (nie publikujemy w repo) ---
+info1.md
