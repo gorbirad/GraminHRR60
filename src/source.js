@@ -23,6 +23,10 @@ export async function loadGarminActivities({
   const url = env.GARMIN_CONNECT_JSON_URL;
 
   if (url) {
+    if (typeof fetchImpl !== 'function') {
+      throw new Error('Brak implementacji fetch dla źródła Garmin Connect skonfigurowanego przez URL.');
+    }
+
     const headers = { accept: 'application/json' };
 
     if (env.GARMIN_CONNECT_BEARER_TOKEN) {

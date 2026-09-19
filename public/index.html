@@ -22,7 +22,7 @@
       <button id="refresh">Odśwież teraz</button>
       <p id="meta" class="meta">Ładowanie…</p>
       <p id="error" class="error"></p>
-      <table aria-describedby="meta error">
+      <table id="results-table" aria-describedby="meta">
         <caption>Wyniki HRR60 dla pobranych aktywności Garmin Connect</caption>
         <thead>
           <tr>
@@ -44,6 +44,11 @@
       const tbody = document.getElementById('results');
       const refreshButton = document.getElementById('refresh');
       const dashboard = document.getElementById('dashboard');
+      const resultsTable = document.getElementById('results-table');
+
+      function updateTableDescription() {
+        resultsTable.setAttribute('aria-describedby', error.textContent ? 'meta error' : 'meta');
+      }
 
       function appendCell(row, value) {
         const cell = document.createElement('td');
@@ -88,6 +93,7 @@
         dashboard.setAttribute('aria-busy', 'true');
         refreshButton.disabled = true;
         error.textContent = '';
+        updateTableDescription();
         meta.textContent = 'Ładowanie…';
 
         try {
@@ -109,10 +115,12 @@
             ? `Źródło: ${payload.source} · Ostatnie odświeżenie: ${payload.refreshedAt}`
             : 'Brak danych';
           error.textContent = payload.error ?? '';
+          updateTableDescription();
           renderResults(payload.results);
         } catch (fetchError) {
           meta.textContent = 'Nie udało się pobrać wyników.';
           error.textContent = fetchError.message;
+          updateTableDescription();
           renderResults([]);
         } finally {
           dashboard.setAttribute('aria-busy', 'false');
