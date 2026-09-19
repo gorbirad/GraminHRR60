@@ -1,0 +1,32 @@
+# --- Secrets / credentials (NIGDY nie commitować) ---
+.env
+secrets.toml
+secrets.json
+data/.garth_session/
+*.session
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# --- Dane lokalne (baza, pobrane pliki treningów) ---
+data/*.db
+data/*.sqlite3
+data/downloads/
+data/*.fit
+data/*.tcx
+data/*.gpx
+
+# --- Narzędzia / edytory ---
+.vscode/
+.idea/
+*.log
