@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException
 
 from .config import get_settings
 from .storage import Storage
+from .sync import sync_recent_activities
 
 app = FastAPI(title="Garmin HRR60 Tracker")
 
@@ -28,11 +29,24 @@ def get_activity_hrr60(activity_id: str) -> dict:
 
 
 @app.post("/sync")
-def sync_activities() -> dict:
-    """Placeholder do ręcznego wywołania synchronizacji z Garmin Connect.
+def sync_activities(limit: int = 5) -> dict:
+    """Loguje się do Garmin Connect, pobiera `limit` ostatnich aktywności i liczy HRR60.
 
-    Docelowa implementacja: zalogować się przez GarminClient, pobrać nowe
-    aktywności, policzyć HRR60 (hrr_calculator) i zapisać (storage) - patrz
-    PLAN.md, etap 6/7.
+    Zwraca listę wyników (status "ok"/"skipped_no_hr_data"/"error") dla każdej
+    sprawdzonej aktywności.
     """
-    return {"status": "not_implemented_yet"}
+    outcomes = sync_recent_activities(limit=limit)
+    return {
+        "checked": len(outcomes),
+        "results": [
+            {
+                "activity_id": o.activity_id,
+                "activity_name": o.activity_name,
+                "start_time": o.start_time,
+                "status": o.status,
+                "message": o.message,
+                "hrr60": o.result.hrr60 if o.result else None,
+            }
+            for o in outcomes
+        ],
+    }
