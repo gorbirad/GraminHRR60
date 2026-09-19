@@ -105,6 +105,7 @@ export function createApp({
   }
 
   function startAutoRefresh() {
+    stopAutoRefresh();
     const intervalMs = Number.parseInt(env.FETCH_INTERVAL_MS ?? '900000', 10);
 
     if (Number.isFinite(intervalMs) && intervalMs > 0) {

@@ -5,7 +5,9 @@ const port = Number.parseInt(process.env.PORT ?? '3000', 10);
 const app = createApp();
 const server = http.createServer(app.handler);
 
-app.refreshResults().catch(() => {});
+app.refreshResults().catch((error) => {
+  console.error('Initial GarminHRR60 refresh failed:', error);
+});
 app.startAutoRefresh();
 
 server.listen(port, () => {
