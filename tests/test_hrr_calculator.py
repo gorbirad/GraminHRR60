@@ -66,3 +66,40 @@ def test_compute_hrr60_raises_when_not_enough_future_data():
 def test_compute_hrr60_raises_with_too_few_samples():
     with pytest.raises(HRRCalculationError):
         compute_hrr60([HRSample(time=datetime.now(timezone.utc), hr=150)])
+
+
+def test_compute_hrr60_with_reference_time_interpolates_hr_at_t0():
+    start = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    # próbki co 10 sekund - t0 (reference_time) wypadnie między próbkami.
+    samples = [
+        HRSample(time=start, hr=150),
+        HRSample(time=start + timedelta(seconds=10), hr=140),
+        HRSample(time=start + timedelta(seconds=70), hr=140),
+        HRSample(time=start + timedelta(seconds=80), hr=100),
+    ]
+
+    # t0 = start + 5s -> dokładnie w połowie między próbką 150 (t=0) a 140 (t=10)
+    reference_time = start + timedelta(seconds=5)
+    result = compute_hrr60(samples, reference_time=reference_time)
+
+    assert result.t0 == reference_time
+    assert result.hr_at_t0 == pytest.approx(145.0)
+    assert result.t1 == reference_time + timedelta(seconds=60)
+    assert result.hr_at_t1 == pytest.approx(140.0)
+    assert result.hrr60 == pytest.approx(5.0)
+
+
+def test_compute_hrr60_raises_when_reference_time_before_first_sample():
+    start = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    samples = _samples_every_second(start, [160 - i for i in range(90)])
+
+    with pytest.raises(HRRCalculationError):
+        compute_hrr60(samples, reference_time=start - timedelta(seconds=1))
+
+
+def test_compute_hrr60_raises_when_both_reference_kwargs_given():
+    start = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    samples = _samples_every_second(start, [160 - i for i in range(90)])
+
+    with pytest.raises(ValueError):
+        compute_hrr60(samples, reference_index=0, reference_time=start)

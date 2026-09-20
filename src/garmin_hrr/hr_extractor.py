@@ -2,6 +2,9 @@
 
 Obsługiwane źródła:
 - odpowiedź `get_activity_details()` z Garmin Connect (API, bez plików),
+- odpowiedź `get_heart_rates(date)` z Garmin Connect - ciągły pomiar tętna
+  z nadgarstka dla całego dnia, niezależny od konkretnej aktywności (używany
+  jako fallback, gdy w samej aktywności brakuje próbek 60s po jej końcu),
 - pliki TCX (Garmin i inne zegarki eksportujące ten format),
 - pliki FIT (Garmin, Polar, Wahoo, ...),
 - pliki GPX (rzadziej zawierają tętno, ale bywa w rozszerzeniach `gpxtpx:hr`).
@@ -62,6 +65,41 @@ def from_garmin_activity_details(details: dict[str, Any]) -> list[HRSample]:
         # `directTimestamp` bywa epoch w milisekundach.
         time_point = datetime.fromtimestamp(time_value / 1000.0, tz=timezone.utc)
         samples.append(HRSample(time=time_point, hr=int(hr_value)))
+
+    samples.sort(key=lambda s: s.time)
+    return samples
+
+
+def from_garmin_daily_heart_rate(daily_hr: dict[str, Any]) -> list[HRSample]:
+    """Parsuje odpowiedź `Garmin.get_heart_rates(date)`.
+
+    To jest ciągły pomiar tętna z nadgarstka dla całego dnia, niezależny od
+    konkretnej aktywności - urządzenie kontynuuje go również po zakończeniu
+    nagrywania treningu. Używany jako fallback w `sync.py`, gdy sama aktywność
+    nie zawiera 60 sekund próbek po punkcie odniesienia (co jest regułą, a nie
+    wyjątkiem: ostatnia próbka nagrania z definicji nie ma "przyszłych" próbek
+    w tym samym nagraniu).
+
+    Uwaga: częstotliwość próbkowania w ciągłym pomiarze bywa rzadsza (Garmin
+    zwykle próbkuje co ok. 2 minuty poza aktywnością), więc wynik HRR60 oparty
+    o te dane jest interpolowany z mniejszą dokładnością niż w trakcie samej
+    aktywności.
+    """
+    values = daily_hr.get("heartRateValues") or []
+
+    samples: list[HRSample] = []
+    for entry in values:
+        if not entry or len(entry) < 2:
+            continue
+        timestamp_ms, hr_value = entry[0], entry[1]
+        if timestamp_ms is None or hr_value is None:
+            continue
+        samples.append(
+            HRSample(
+                time=datetime.fromtimestamp(timestamp_ms / 1000.0, tz=timezone.utc),
+                hr=int(hr_value),
+            )
+        )
 
     samples.sort(key=lambda s: s.time)
     return samples

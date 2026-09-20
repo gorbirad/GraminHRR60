@@ -21,15 +21,20 @@ Garmin/
 │   ├── config.py                # wczytywanie ustawień z .env
 │   ├── garmin_client.py         # logowanie + pobieranie z Garmin Connect
 │   ├── hr_extractor.py          # próbki tętna z API/TCX/FIT/GPX (różne zegarki)
+│   ├── intervals.py             # wyznaczanie t0 (koniec głównej sesji) z lapów/interwałów
 │   ├── hrr_calculator.py        # logika HRR60 (z interpolacją)
 │   ├── storage.py               # zapis wyników do SQLite
 │   ├── sync.py                  # logika synchronizacji: Garmin -> HRR60 -> baza
 │   └── api.py                   # FastAPI: GET /activities, POST /sync, ...
 ├── scripts/
-│   └── sync_last_activity.py    # szybki test z linii poleceń (bez API/serwera)
+│   ├── sync_last_activity.py    # szybki test z linii poleceń (bez API/serwera)
+│   ├── inspect_activity.py      # diagnostyka: lapy/interwały + wyznaczone t0 dla 1 aktywności
+│   └── inspect_recent_activities.py  # diagnostyka: przegląd typów/lapów dla N ostatnich aktywności
 ├── data/                        # baza SQLite + pobrane pliki (gitignored)
 └── tests/
-    └── test_hrr_calculator.py   # testy logiki HRR60 (nie wymagają logowania)
+    ├── test_hrr_calculator.py   # testy logiki HRR60 (nie wymagają logowania)
+    ├── test_intervals.py        # testy wyznaczania t0 z lapów/interwałów
+    └── test_sync.py             # testy filtra typów aktywności i fallbacku ciągłego tętna
 ```
 
 ## Szybki start
@@ -74,9 +79,19 @@ Status: ok
 
 Wynik zostaje też zapisany w `data/hrr.db`. Możliwe statusy:
 - `ok` — HRR60 policzone i zapisane,
+- `skipped_not_running` — aktywność nie jest biegiem (patrz PLAN.md 3b) i nie
+  jest przetwarzana,
 - `skipped_no_hr_data` — aktywność nie ma danych o tętnie albo trwa krócej
   niż 60s po punkcie odniesienia (np. bardzo krótki trening),
 - `error` — problem z pobraniem danych (np. wygasła sesja, błąd sieci).
+
+**Punkt odniesienia t0** to koniec ostatniego faktycznego interwału
+biegowego (NIE koniec całego nagrania - patrz PLAN.md sekcja 3d), wyznaczany
+automatycznie z lapów/interwałów aktywności (`intervals.py`). Dla
+niestrukturyzowanych biegów bez wydzielonego schładzania t0 = koniec
+nagrania, a brakujące 60s danych po t0 (typowe dla wyścigów i krótkich
+biegów) jest dociągane z ciągłego (nadgarstkowego) pomiaru tętna z całego
+dnia.
 
 Żeby sprawdzić więcej niż jedną aktywność: `--limit 5`.
 Żeby zobaczyć szczegółowe logi (np. debugować logowanie): `-v` / `--verbose`.
@@ -97,6 +112,8 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/activities"
 - [x] 2. Logowanie do Garmin (`garmin_client.py`)
 - [x] 3. Wyciąganie próbek tętna z wielu źródeł, z fallbackiem API -> TCX (`hr_extractor.py`, `sync.py`)
 - [x] 4. Kalkulator HRR60 z testami (`hrr_calculator.py`)
+- [x] 4b. t0 = koniec ostatniego interwału biegowego (nie koniec nagrania),
+      filtr aktywności tylko biegowych (`intervals.py`, `sync.py`, PLAN.md 3a-3e)
 - [x] 5. Storage SQLite (`storage.py`)
 - [x] 6. Pełne API (`GET /activities`, `GET /activities/{id}/hrr60`, `POST /sync`)
 - [ ] 7. Scheduler (automatyczne sprawdzanie nowych aktywności co N minut)

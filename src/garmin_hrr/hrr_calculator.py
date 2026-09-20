@@ -15,7 +15,7 @@ from .hr_extractor import HRSample
 @dataclass(frozen=True)
 class HRRResult:
     t0: datetime
-    hr_at_t0: int
+    hr_at_t0: float
     t1: datetime
     hr_at_t1: float
     hrr60: float
@@ -49,6 +49,7 @@ def _interpolate_hr(samples: list[HRSample], target_time) -> float:
 def compute_hrr60(
     samples: list[HRSample],
     reference_index: int | None = None,
+    reference_time: datetime | None = None,
 ) -> HRRResult:
     """Liczy HRR60 dla podanych próbek tętna.
 
@@ -56,24 +57,43 @@ def compute_hrr60(
         samples: próbki tętna (posortowane lub nie - zostaną posortowane).
         reference_index: indeks próbki traktowanej jako koniec głównej sesji
             (t0). Domyślnie `None` = ostatnia próbka (wariant A z PLAN.md:
-            "koniec całej aktywności"). Można podać inny indeks, np. koniec
-            konkretnego lapa (wariant B) lub ręcznie wskazaną minutę (wariant C).
+            "koniec całej aktywności"). Ignorowane, jeśli podano `reference_time`.
+        reference_time: dokładny moment (datetime) traktowany jako t0 - koniec
+            głównej sesji treningu wyznaczony np. na podstawie lapów/interwałów
+            (patrz `intervals.determine_main_session_end` i PLAN.md sekcja 3d).
+            Nie musi trafiać dokładnie w próbkę - tętno w tym punkcie jest wtedy
+            interpolowane liniowo, tak samo jak dla t1. Wzajemnie wykluczające
+            się z `reference_index`.
 
     Raises:
         HRRCalculationError: gdy brak wystarczających danych (mniej niż 2
-            próbki, albo brak próbek sięgających t0 + 60s).
+            próbki, `reference_time` poza zakresem dostępnych próbek, albo
+            brak próbek sięgających t0 + 60s).
+        ValueError: gdy podano jednocześnie `reference_index` i `reference_time`.
     """
+    if reference_index is not None and reference_time is not None:
+        raise ValueError("Podaj tylko jeden z reference_index/reference_time, nie oba naraz.")
+
     if len(samples) < 2:
         raise HRRCalculationError("Potrzeba co najmniej 2 próbek tętna.")
 
     ordered = sorted(samples, key=lambda s: s.time)
 
-    ref_idx = len(ordered) - 1 if reference_index is None else reference_index
-    if not (0 <= ref_idx < len(ordered)):
-        raise HRRCalculationError(f"reference_index={reference_index} poza zakresem danych.")
+    if reference_time is not None:
+        if reference_time < ordered[0].time or reference_time > ordered[-1].time:
+            raise HRRCalculationError(
+                "reference_time poza zakresem dostępnych próbek tętna."
+            )
+        t0 = reference_time
+        hr_at_t0 = _interpolate_hr(ordered, t0)
+    else:
+        ref_idx = len(ordered) - 1 if reference_index is None else reference_index
+        if not (0 <= ref_idx < len(ordered)):
+            raise HRRCalculationError(f"reference_index={reference_index} poza zakresem danych.")
+        reference = ordered[ref_idx]
+        t0 = reference.time
+        hr_at_t0 = float(reference.hr)
 
-    reference = ordered[ref_idx]
-    t0 = reference.time
     t1 = t0 + timedelta(seconds=60)
 
     if t1 > ordered[-1].time:
@@ -86,8 +106,8 @@ def compute_hrr60(
 
     return HRRResult(
         t0=t0,
-        hr_at_t0=reference.hr,
+        hr_at_t0=hr_at_t0,
         t1=t1,
         hr_at_t1=hr_at_t1,
-        hrr60=reference.hr - hr_at_t1,
+        hrr60=hr_at_t0 - hr_at_t1,
     )

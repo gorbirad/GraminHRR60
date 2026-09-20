@@ -54,9 +54,42 @@ class GarminClient:
         """Zwraca listę ostatnich aktywności (najnowsze pierwsze)."""
         return self.api.get_activities(start, limit)
 
+    def list_activities_by_date(
+        self, start_date: str, end_date: str | None = None
+    ) -> list[dict[str, Any]]:
+        """Zwraca wszystkie aktywności między `start_date` a `end_date` (format YYYY-MM-DD).
+
+        `end_date=None` oznacza "do dziś" (tak działa to w samej bibliotece
+        `garminconnect`). Wynik jest automatycznie paginowany przez bibliotekę,
+        więc może obejmować dowolną liczbę aktywności w podanym zakresie dat.
+        """
+        return self.api.get_activities_by_date(start_date, end_date)
+
     def get_activity_details(self, activity_id: int | str) -> dict[str, Any]:
         """Zwraca szczegóły aktywności zawierające m.in. próbki tętna w czasie."""
         return self.api.get_activity_details(activity_id)
+
+    def get_activity_summary(self, activity_id: int | str) -> dict[str, Any]:
+        """Zwraca podsumowanie aktywności (m.in. `activityType` - do filtrowania biegów)."""
+        return self.api.get_activity(activity_id)
+
+    def get_activity_splits(self, activity_id: int | str) -> dict[str, Any]:
+        """Zwraca podział aktywności na okrążenia/interwały (laps)."""
+        return self.api.get_activity_splits(activity_id)
+
+    def get_activity_typed_splits(self, activity_id: int | str) -> dict[str, Any]:
+        """Zwraca 'typed splits' - podział na interwały z dodatkowym typem
+        (np. aktywny/odpoczynek), jeśli Garmin go udostępnia dla danej aktywności.
+        """
+        return self.api.get_activity_typed_splits(activity_id)
+
+    def get_daily_heart_rates(self, date_str: str) -> dict[str, Any]:
+        """Zwraca ciągły pomiar tętna (nadgarstkowy) dla całego dnia `date_str` (YYYY-MM-DD).
+
+        Używane jako fallback do wyliczenia HRR60, gdy w samej aktywności brakuje
+        próbek 60s po punkcie odniesienia (patrz `sync.py`).
+        """
+        return self.api.get_heart_rates(date_str)
 
     def download_activity_file(
         self, activity_id: int | str, dl_fmt: str = "TCX"
