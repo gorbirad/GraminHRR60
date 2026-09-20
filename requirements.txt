@@ -4,6 +4,10 @@ fastapi>=0.111.0
 uvicorn[standard]>=0.30.0
 apscheduler>=3.10.4
 
+# Dashboard (wyświetlanie wyników HRR60)
+streamlit>=1.38.0
+pandas>=2.2.0
+
 # Parsowanie plików z innych zegarków (FIT/TCX/GPX)
 fitparse>=1.2.0
 xmltodict>=0.13.0

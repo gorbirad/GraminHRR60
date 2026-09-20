@@ -28,6 +28,7 @@ Garmin/
 │   └── api.py                   # FastAPI: GET /activities, POST /sync, ...
 ├── scripts/
 │   ├── sync_last_activity.py    # szybki test z linii poleceń (bez API/serwera)
+│   ├── dashboard.py             # dashboard Streamlit (wizualny podgląd wyników HRR60)
 │   ├── inspect_activity.py      # diagnostyka: lapy/interwały + wyznaczone t0 dla 1 aktywności
 │   └── inspect_recent_activities.py  # diagnostyka: przegląd typów/lapów dla N ostatnich aktywności
 ├── data/                        # baza SQLite + pobrane pliki (gitignored)
@@ -106,6 +107,31 @@ Invoke-RestMethod -Method Post -Uri "http://127.0.0.1:8000/sync?limit=1"
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/activities"
 ```
 
+Żeby sprawdzić wszystkie aktywności z konkretnego zakresu dat (np. cały bieżący
+miesiąc) zamiast ostatnich `--limit`:
+```powershell
+.\.venv\Scripts\python.exe scripts\sync_last_activity.py --this-month
+# albo dowolny zakres:
+.\.venv\Scripts\python.exe scripts\sync_last_activity.py --start-date 2026-09-01 --end-date 2026-09-30
+```
+Na końcu skrypt wypisze też liczbę sprawdzonych aktywności i średnie HRR60.
+
+## Dashboard (wizualny podgląd wyników)
+
+Zamiast czytać wyniki z konsoli, można je przeglądać w prostym dashboardzie
+Streamlit - tabela, wykres HRR60 w czasie, filtr zakresu dat i przycisk do
+ręcznej synchronizacji nowych aktywności, bez schedulera i bez Discorda.
+
+```powershell
+.\.venv\Scripts\streamlit.exe run scripts\dashboard.py
+```
+
+Otworzy się w przeglądarce pod `http://localhost:8501`. Dashboard czyta
+dane bezpośrednio z `data/hrr.db` - żeby zobaczyć nowe wyniki, najpierw
+zsynchronizuj aktywności (`sync_last_activity.py` albo przycisk
+"Pobierz nowe aktywności z Garmina" w samym dashboardzie), a potem odśwież
+stronę.
+
 ## Status implementacji (zgodnie z PLAN.md, sekcja 6)
 
 - [x] 1. Szkielet projektu
@@ -116,9 +142,10 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/activities"
       filtr aktywności tylko biegowych (`intervals.py`, `sync.py`, PLAN.md 3a-3e)
 - [x] 5. Storage SQLite (`storage.py`)
 - [x] 6. Pełne API (`GET /activities`, `GET /activities/{id}/hrr60`, `POST /sync`)
-- [ ] 7. Scheduler (automatyczne sprawdzanie nowych aktywności co N minut)
-- [ ] 8. Discord notifier (opcjonalnie)
-- [ ] 9. Frontend (opcjonalnie)
+- [x] 6b. Synchronizacja po zakresie dat (`--this-month`, `--start-date`/`--end-date`, `sync_activities_by_date`)
+- [x] 7. Dashboard Streamlit (`scripts/dashboard.py`) - wizualny podgląd bez schedulera/Discorda
+- [ ] 8. Scheduler (automatyczne sprawdzanie nowych aktywności co N minut) - świadomie pominięte na razie
+- [ ] 9. Discord notifier - świadomie pominięte na razie
 
 ## Bezpieczeństwo
 

@@ -31,6 +31,7 @@ data/*.gpx
 .vscode/
 .idea/
 *.log
+.streamlit/
 
 # --- Prywatne notatki (nie publikujemy w repo) ---
 info1.md
