@@ -62,27 +62,58 @@ st.caption(
 )
 
 with st.expander("🔄 Pobierz nowe aktywności z Garmina", expanded=False):
+    settings = get_settings()
+    env_has_credentials = bool(settings.garmin_email and settings.garmin_password)
+    if not env_has_credentials:
+        st.info(
+            "Brak zapisanych danych logowania na serwerze (np. wdrożenie na Render "
+            "bez zmiennych środowiskowych GARMIN_EMAIL/GARMIN_PASSWORD). Wpisz je "
+            "poniżej - są trzymane tylko w pamięci tej sesji przeglądarki, nigdy "
+            "nie są zapisywane na dysku ani wysyłane nigdzie poza logowanie do "
+            "Garmin Connect."
+        )
+        st.session_state.setdefault("garmin_email", "")
+        st.session_state.setdefault("garmin_password", "")
+        st.session_state["garmin_email"] = st.text_input(
+            "E-mail Garmin Connect", value=st.session_state["garmin_email"]
+        )
+        st.session_state["garmin_password"] = st.text_input(
+            "Hasło Garmin Connect",
+            value=st.session_state["garmin_password"],
+            type="password",
+        )
+
     col1, col2, col3 = st.columns([1, 1, 1])
     default_start = pd.Timestamp.today().replace(day=1).date()
     start_date = col1.date_input("Od daty", value=default_start)
     end_date = col2.date_input("Do daty", value=pd.Timestamp.today().date())
-    if col3.button("Synchronizuj", type="primary"):
-        with st.spinner("Logowanie do Garmin Connect i pobieranie aktywności..."):
-            try:
-                outcomes = sync_activities_by_date(
-                    start_date.isoformat(), end_date.isoformat()
-                )
-            except Exception as exc:  # noqa: BLE001
-                st.error(f"Synchronizacja nie powiodła się: {exc}")
-            else:
-                ok = sum(1 for o in outcomes if o.status == "ok")
-                skipped = sum(1 for o in outcomes if o.status.startswith("skipped"))
-                errors = sum(1 for o in outcomes if o.status == "error")
-                st.success(
-                    f"Sprawdzono {len(outcomes)} aktywności: {ok} policzonych, "
-                    f"{skipped} pominiętych, {errors} błędów."
-                )
-                st.rerun()
+    sync_clicked = col3.button("Synchronizuj", type="primary")
+
+    if sync_clicked:
+        login_email = st.session_state.get("garmin_email") or None
+        login_password = st.session_state.get("garmin_password") or None
+        if not env_has_credentials and not (login_email and login_password):
+            st.error("Podaj e-mail i hasło Garmin Connect powyżej przed synchronizacją.")
+        else:
+            with st.spinner("Logowanie do Garmin Connect i pobieranie aktywności..."):
+                try:
+                    outcomes = sync_activities_by_date(
+                        start_date.isoformat(),
+                        end_date.isoformat(),
+                        garmin_email=login_email,
+                        garmin_password=login_password,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    st.error(f"Synchronizacja nie powiodła się: {exc}")
+                else:
+                    ok = sum(1 for o in outcomes if o.status == "ok")
+                    skipped = sum(1 for o in outcomes if o.status.startswith("skipped"))
+                    errors = sum(1 for o in outcomes if o.status == "error")
+                    st.success(
+                        f"Sprawdzono {len(outcomes)} aktywności: {ok} policzonych, "
+                        f"{skipped} pominiętych, {errors} błędów."
+                    )
+                    st.rerun()
 
 df = _load_activities()
 

@@ -7,6 +7,7 @@ dzięki czemu logowanie hasłem jest potrzebne tylko raz.
 """
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -18,8 +19,25 @@ from .config import Settings, get_settings
 class GarminClient:
     """Cienki wrapper na bibliotekę `garminconnect` dla naszych potrzeb."""
 
-    def __init__(self, settings: Settings | None = None) -> None:
-        self.settings = settings or get_settings()
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        *,
+        email: str | None = None,
+        password: str | None = None,
+    ) -> None:
+        """`email`/`password` pozwalają nadpisać dane logowania z `.env`/zmiennych
+        środowiskowych jednorazowo (np. gdy użytkownik wpisze je ręcznie w
+        dashboardzie zamiast trzymać je jako sekret na serwerze) - patrz
+        `scripts/dashboard.py`."""
+        base_settings = settings or get_settings()
+        if email or password:
+            base_settings = replace(
+                base_settings,
+                garmin_email=email or base_settings.garmin_email,
+                garmin_password=password or base_settings.garmin_password,
+            )
+        self.settings = base_settings
         self._api: Garmin | None = None
 
     def login(self) -> None:

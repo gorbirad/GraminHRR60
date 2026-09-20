@@ -229,9 +229,18 @@ def sync_activity(
     )
 
 
-def sync_recent_activities(limit: int = 5) -> list[SyncOutcome]:
-    """Loguje się do Garmina, pobiera `limit` ostatnich aktywności i liczy dla nich HRR60."""
-    client = GarminClient()
+def sync_recent_activities(
+    limit: int = 5,
+    *,
+    garmin_email: str | None = None,
+    garmin_password: str | None = None,
+) -> list[SyncOutcome]:
+    """Loguje się do Garmina, pobiera `limit` ostatnich aktywności i liczy dla nich HRR60.
+
+    `garmin_email`/`garmin_password` pozwalają jednorazowo nadpisać dane logowania
+    z `.env` (np. formularz logowania w dashboardzie zamiast sekretu na serwerze).
+    """
+    client = GarminClient(email=garmin_email, password=garmin_password)
     client.login()
 
     from .config import get_settings
@@ -247,14 +256,21 @@ def sync_recent_activities(limit: int = 5) -> list[SyncOutcome]:
 
 
 def sync_activities_by_date(
-    start_date: str, end_date: str | None = None
+    start_date: str,
+    end_date: str | None = None,
+    *,
+    garmin_email: str | None = None,
+    garmin_password: str | None = None,
 ) -> list[SyncOutcome]:
     """Loguje się do Garmina, pobiera WSZYSTKIE aktywności z zakresu dat
     `start_date`..`end_date` (format YYYY-MM-DD, `end_date=None` = do dziś)
     i liczy dla nich HRR60. Przydatne np. do sprawdzenia całego miesiąca
     naraz, zamiast podawać `limit` "na oko".
+
+    `garmin_email`/`garmin_password` pozwalają jednorazowo nadpisać dane logowania
+    z `.env` (np. formularz logowania w dashboardzie zamiast sekretu na serwerze).
     """
-    client = GarminClient()
+    client = GarminClient(email=garmin_email, password=garmin_password)
     client.login()
 
     from .config import get_settings
